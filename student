@@ -1,0 +1,353 @@
+import random
+import threading
+import math, sqlalchemy
+
+#Student class
+class Student:
+    def __init__(self,rollno,firstname,lastname,password,email):
+        self.rollno = rollno
+        self.firstname = firstname
+        self.lastname = lastname
+        self.password =password
+        self.email = email
+        
+    def printobjectdetails(self):
+        print("Roll No:",self.rollno)
+        print("Firstname:",self.firstname)
+        print("Lastname:",self.lastname)
+        print("Password:",self.password)
+        print("Email id:",self.email)
+        
+def studentregistration():                          #function to add new student object
+        rollno = input("\nEnter your Rollno: ")
+        firstname = input("Enter your Firstname: ")
+        lastname = input("Enter your Lastname: ")
+        password = input("Enter your Password: ")
+        email= input("Enter your Email ID: ")
+        l.append(Student(rollno,firstname,lastname,password,email))    
+
+def studentauthentication():                        #function to chect user authentication
+    em = input("\nEnter your Email ID: ")
+    pw = input("Enter your Password: ")
+    for i in range(0,len(l)):
+        if(em==l[i].email and pw==l[i].password ):
+            print("User authentication successful")
+            break
+    else:
+        print("User authentication failed, Check your email id and password")
+
+def studentchangeemail():                        #function to chect user authentication
+    em = input("\nEnter your old Email ID: ")
+    emn = input("Enter your new Email ID: ")
+    for i in range(0,len(l)):
+        if(em==l[i].email):
+            l[i].email=emn
+            print("Email ID changed successfully")
+            break
+    else:
+        print("No such email id found!")
+
+l=[] 
+
+l.append( Student(1,"Anirudh","Sasi","anirudh@123","anirudh@gmail.com") )
+l.append( Student(2,"Anandh","Ramesh","Anandh1999","anandh@gmail.com") )
+l.append( Student(3,"aswin","Rajeev","Aswin#2021","aswin@gmail.com") )
+
+
+class Question:
+    def __init__(self,QID,QText,QType):
+        self.QID=QID
+        self.QType=QType
+        if isinstance(QType, MatchingQuestion):
+            self.AssMarks=4
+            self.QText="Match the following"
+        elif isinstance(QType, Fill):
+            self.AssMarks=2
+            self.QText="Fill in the blanks"
+        else:
+            self.AssMarks=1
+            self.QText="Choose the correct option"
+        self.QText+="\n"+QText
+        self.AwaMarks=0.0
+
+    def printAllObjectDetails(self):
+        print("Question ID is", self.QID)
+        print("Question is",self.QText)
+        print("Type of the Question is",self.QType)
+        print("The marks Assigned to this Question is:",self.AssMarks)
+        print("The marks awarded according to the answer:",self.AwaMarks)
+
+    def evaluate(self):
+        if isinstance(self.QType, MatchingQuestion):
+            if self.QType.response==self.QType.correctAnswerSet:
+                self.AwaMarks=self.AssMarks
+        elif isinstance(self.QType, multipleChoice):
+            if self.QType.selectedoption==self.QType.correctoption:
+                self.AwaMarks=self.AssMarks
+        elif isinstance(self.QType, Fill):
+            if self.QType.answer_field==self.QType.answer_key:
+                self.AwaMarks=self.AssMarks
+
+class multipleChoice:
+    def __init__(self,options,correctoption):
+        self.options=options
+        self.correctoption=correctoption
+        self.selectedoption=None
+        
+    def printAllObject(self):
+        print("Options :",self.options)
+        print("Selected Option:",self.selectedoption)
+        print("Correct Option is :",self.correctoption)
+
+    def displayQuestion(self):
+        i=1
+        for choice in self.options:
+            print(f'({i}) {choice}')
+            i+=1
+
+    def acceptAnswer(self):
+        self.selectedoption=int(input('Type your choice(number): '))
+
+
+#Fill in the blanks class
+class Fill:
+    def __init__(self,answer_key):
+        self.answer_field=""
+        self.answer_key = answer_key
+        
+    def printobjectfill(self):
+        print("answer_field:",self.answer_field)
+        print("answer_key:",self.answer_key,"\n")
+
+    def acceptAnswer(self):
+        self.answer_field=input('Type your answer = ')
+
+    def addanswerkey(self):
+        self.answer_key=input("Enter the answer key: ")
+    
+    def editanswerkey(self):          
+        self.answer_key = input("Enter the new answer key: ")    
+    
+
+class MatchingQuestion:
+    ''' Class for match the following question '''
+    
+    def __init__(self, correctAnswerSet):
+        self.questionSet=list(correctAnswerSet.keys())
+        random.shuffle(self.questionSet)
+        self.possibleAnswerSet=list(correctAnswerSet.values())
+        random.shuffle(self.possibleAnswerSet)
+        self.correctAnswerSet=correctAnswerSet
+        self.response=dict()
+
+    def displayQuestion(self):
+        print('Set 1:')
+        print("\t"+"\n\t".join(self.questionSet))
+        print('Set 2:')
+        print("\t"+"\n\t".join(self.possibleAnswerSet))
+
+    def acceptAnswer(self):
+        print("Type the word in Set 2 matching:")
+        for word in self.questionSet:
+            self.response[word]=input(f'{word} = ')
+
+
+class QuestionPaper:
+    ''' Question paper class '''
+    
+    def __init__(self, QPId, duration, subject, semester, dateAndTimeOfExam, questions, passMark, instructions="General instructions"):
+        self.QPId=QPId
+        self.duration=duration
+        self.instructions=instructions
+        self.subject=subject
+        self.semester=semester
+        self.dateAndTimeOfExam=dateAndTimeOfExam
+        self.noOfQuestions=len(questions)
+        self.questions=questions
+        self.passMark=passMark
+        self.totalMarksObtained=0.0
+        # Calculating total marks assigned
+        self.totalMarksAssigned=0.0
+        for question in self.questions:
+            self.totalMarksAssigned+=question.AssMarks
+        self.TIMEOUT=False
+        
+    def displayQuestionPaperDetails(self):
+        ''' Method to display details'''
+
+        print(f'Question Paper Details:\
+        \n\tID: {self.QPId}\
+        \n\tDuration: {self.duration} minutes\
+        \n\tInstructions: {self.instructions}\
+        \n\tSubject: {self.subject}\
+        \n\tSemester: {self.semester}\
+        \n\tDate and Time of exam: {self.dateAndTimeOfExam}\
+        \n\tMax. marks: {self.totalMarksAssigned}\
+        \n\tPassmark: {self.passMark}\
+        ')
+
+    def setFlag(self):
+        self.TIMEOUT=True
+        
+    def startTest(self):
+        ''' As of now, method prints the exam details and questions '''
+
+        timer=threading.Timer(self.duration*60, self.setFlag)
+        timer.start()
+        
+        self.displayQuestionPaperDetails()
+        print()
+        qNumber=1
+        for question in self.questions:
+            if not(self.TIMEOUT):
+                print(f'{qNumber}. {question.QText} ({question.AssMarks} points)')
+                qNumber+=1
+                if isinstance(question.QType, MatchingQuestion):
+                    question.QType.displayQuestion()
+                    print()
+                elif isinstance(question.QType, multipleChoice):
+                    question.QType.displayQuestion()
+                    print()
+                elif isinstance(question.QType, Fill):
+                    print()
+                question.QType.acceptAnswer()
+            else:
+                self.TIMEOUT=False
+                print("Time over!")
+                break
+
+    def evaluateTest(self):
+        ''' Calculate total marks obtained by candidate '''
+
+        for question in self.questions:
+            question.evaluate()
+            self.totalMarksObtained+=question.AwaMarks
+    
+    def displayReport(self):
+        ''' Display total marks obtained by candidate and pass/fail status '''
+
+        print(f'Total marks obtained: {self.totalMarksObtained}')
+        if self.totalMarksObtained>=self.passMark:
+            print('Status: Pass')
+        else:
+            print('Status: Fail')
+
+class Subject:
+    ''' Subject class '''
+    id=0
+
+    def __init__(self, subjectID, subjectName):
+        self.subjectID=subjectID
+        self.subjectName=subjectName
+        self.questions=dict()
+        self.questions['mcq']=[]
+        self.questions['fill']=[]
+        self.questions['match']=[]
+        self.id=0
+
+    def addQuestion(self):
+        self.id+=1
+        qText=input("Question Text: ")
+        qType=int(input("Type of question\n1. MCQ \n2. Fill in the blanks\n3. Match the following"))
+        if qType==1:
+            options=[]
+            noOfOptions=int(input("Enter no. of options"))
+            for i in range(noOfOptions):
+                options.append(input(f'Enter option {i+1}'))
+            correctOption=int(input("Enter correct option no.: "))
+            self.questions['mcq'].append(Question(self.id, qText, multipleChoice(options, correctOption)))
+        elif qType==2:
+            answerKey=input("Enter answer key: ")
+            self.questions['fill'].append(Question(self.id, qText, Fill(answerKey)))
+        else:
+            noOfWords=int(input("Enter no. of words in each set: "))
+            correctAnswerSet=dict()
+            for i in range(noOfWords):
+                lhs=input("Enter word in set 1: ")
+                rhs=input("Enter matching word in set 2: ")
+                correctAnswerSet[lhs]=rhs
+            self.questions['match'].append(Question(self.id, qText, MatchingQuestion(correctAnswerSet)))
+
+class Examiner:
+    ''' Examiner class '''
+
+    def __init__(self, examinerId, firstName, lastName, password, email):
+        self.examinerId=examinerId
+        self.firstName=firstName
+        self.lastName=lastName
+        self.password=password
+        self.email=email
+        self.subjects=[]
+
+    def createSubject(self):
+        Subject.id+=1
+        sName=input("Enter subject name: ")
+        self.subjects.append(Subject(Subject.id, sName))
+
+    def deleteSubject(self):
+        print("List of your subjects:")
+        for subject in self.subjects:
+            print(f'{subject.subjectID}. {subject.subjectName}')
+        sID=int(input("Enter id of subject to be deleted: "))
+        counter=0
+        for subject in self.subjects:
+            if sID==subject.subjectID:
+                flag=True
+                del subjects[counter]
+                break
+            counter+=1
+        if counter==len(subjects):
+            print("Subject not found!")
+        else:
+            print("Subject deleted successfully")
+
+def examinerRegistration():                          #function to add new student object
+        examinerId = input("\nEnter your ExaminerID: ")
+        firstname = input("Enter your Firstname: ")
+        lastname = input("Enter your Lastname: ")
+        password = input("Enter your Password: ")
+        email= input("Enter your Email ID: ")
+        examinerList.append(Examiner(examinerId,firstname,lastname,password,email))
+
+def examinerAuthentication():                        #function to chect user authentication
+    em = input("\nEnter your Email ID: ")
+    pw = input("Enter your Password: ")
+    for i in range(0,len(l)):
+        if(em==examinerList[i].email and pw==examinerList[i].password ):
+            print("User authentication successful")
+            break
+    else:
+        print("User authentication failed, Check your email id and password")
+
+def examinerChangeEmail():                        #function to chect user authentication
+    em = input("\nEnter your old Email ID: ")
+    emn = input("Enter your new Email ID: ")
+    for i in range(0,len(l)):
+        if(em==examinerList[i].email):
+            examinerList[i].email=emn
+            print("Email ID changed successfully")
+            break
+    else:
+        print("No such email id found!")
+
+
+# Creating questions
+q1=Question(1,'', MatchingQuestion({'Keyboard':'Input', 'Monitor':'Output'}))
+q2=Question(2,"___ is the father of python?",Fill('Guido van Rossum'))
+q3=Question(3,'Python uses an interpreter. True or False?', multipleChoice(['True', 'False'], 1))
+
+# Creating list of questions
+questionList=[q1, q2, q3]
+
+# Creating a question paper
+qp1=QuestionPaper('QP001', 0.25, 'Data Structures', 1, '23-01-2021, 17:00', questionList, 7.00)
+
+print('\n')
+qp1.startTest()  # Display questions
+
+qp1.evaluateTest()  # Calculate total marks obtained
+
+print()
+qp1.displayReport()  # Display report - total marks, pass/fail
+
+
